@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Webring Redirector</title>
+    <style>
+        body {
+            background-color: #1a1a1a;
+            color: #ffffff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+    </style>
+</head>
+<body>
+    <div id="message">Taking you to the next link...</div>
+
+    <script>
+        async function redirect() {
+            GITHUB_REPO = 'https://github.com/delta1513/easy-webring'
+            // Get URL parameters
+            const params = new URLSearchParams(window.location.search);
+            const referrer = params.get('referrer');
+            const direction = params.get('direction');
+
+            // If parameters are missing, redirect to GitHub repo
+            if (!referrer || !direction) {
+                window.location.href = GITHUB_REPO;
+                return;
+            }
+
+            try {
+                // Fetch and parse the links file
+                const response = await fetch('links.txt');
+                const text = await response.text();
+                const links = text.trim().split('\n').map(link => link.trim());
+
+                if (links.length === 0) {
+                    throw new Error('No links found');
+                }
+
+                // Find current index
+                const currentIndex = links.findIndex(link => link === referrer);
+                let nextIndex;
+
+                switch (direction) {
+                    case 'next':
+                        nextIndex = currentIndex === -1 ? 0 : (currentIndex + 1) % links.length;
+                        break;
+                    case 'prev':
+                        nextIndex = currentIndex === -1 ? links.length - 1 : 
+                            (currentIndex - 1 + links.length) % links.length;
+                        break;
+                    case 'random':
+                        do {
+                            nextIndex = Math.floor(Math.random() * links.length);
+                        } while (nextIndex === currentIndex && links.length > 1);
+                        break;
+                    default:
+                        throw new Error('Invalid direction');
+                }
+
+                // Redirect to the next site
+                window.location.href = links[nextIndex];
+            } catch (error) {
+                console.error('Error:', error);
+                window.location.href = GITHUB_REPO;
+            }
+        }
+
+        // Start redirect process when page loads
+        redirect();
+    </script>
+</body>
+</html> 
